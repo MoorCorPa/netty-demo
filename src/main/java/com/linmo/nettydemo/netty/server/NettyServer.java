@@ -3,6 +3,8 @@ package com.linmo.nettydemo.netty.server;
 import com.linmo.nettydemo.handler.SocketChannelInitHandler;
 import com.linmo.nettydemo.utils.PortDefinition;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
@@ -50,6 +52,8 @@ public class NettyServer {
 
         //1.绑定group
         bootstrap.group(boss, worker)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+                .option(ChannelOption.SO_RCVBUF, 10485760)
                 //2.设置并绑定Reactor线程池：EventLoopGroup，EventLoop就是处理所有注册到本线程的Selector上面的Channel
                 .channel(NioServerSocketChannel.class)
                 //3.保存连接数

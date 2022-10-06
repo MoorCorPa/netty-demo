@@ -5,10 +5,13 @@ import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.mqtt.MqttDecoder;
+import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -53,13 +56,19 @@ public class SocketChannelInitHandler extends ChannelInitializer<SocketChannel> 
             case GatewayType.TCP:
                 break;
             case GatewayType.MQTT:
+                pipeline.addLast(
+                        new IdleStateHandler(600, 600,1200),
+                        MqttEncoder.INSTANCE,
+                        new MqttDecoder(),
+                        new MqttServerHandler(),
+                        new LoggingHandler(LogLevel.DEBUG));
                 break;
             default:
                 log.error("当前网关类型并不存在于配置文件中，无法初始化通道");
                 break;
         }
-//        pipeline.addLast(
-//                new StringEncoder(StandardCharsets.UTF_8),
-//                new StringDecoder(StandardCharsets.UTF_8));
+        pipeline.addLast(
+                new StringEncoder(StandardCharsets.UTF_8),
+                new StringDecoder(StandardCharsets.UTF_8));
     }
 }
