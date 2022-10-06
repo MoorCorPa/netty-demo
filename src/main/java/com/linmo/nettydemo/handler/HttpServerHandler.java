@@ -11,11 +11,11 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 
 @Slf4j
 @ChannelHandler.Sharable
-public class HttpServerHandler extends SimpleChannelInboundHandler<HttpRequest> {
+public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
@@ -34,7 +34,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<HttpRequest> 
      * msg 解析后的数据信息
      */
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, HttpRequest msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
         log.error(msg.method().toString());
 //        String gwCode = message.getCode();
 //        ChannelId channelId = ctx.channel().id();
@@ -44,15 +44,18 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<HttpRequest> 
 //        */
 
         //获取请求体&方法
-        FullHttpRequest a = (FullHttpRequest) msg;
-        log.info(a.content().toString());
+        log.info(msg.content().toString());
+
+        String rspMsg = "<h1>hello world</h1>";
 
         //返回响应
-        FullHttpResponse response = new DefaultFullHttpResponse(msg.protocolVersion(), HttpResponseStatus.OK);
-        byte[] rspMsg = "say".getBytes();
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                msg.protocolVersion(),
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(rspMsg, CharsetUtil.UTF_8));
 
-        response.headers().setInt(CONTENT_LENGTH, rspMsg.length);
-        response.content().writeBytes(rspMsg);
+
+        response.headers().set(CONTENT_TYPE, "text/html; charset=UTF-8");
 
         //写回响应
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

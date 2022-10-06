@@ -3,9 +3,12 @@ package com.linmo.nettydemo.handler;
 import com.linmo.nettydemo.utils.GatewayType;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
@@ -39,9 +42,13 @@ public class SocketChannelInitHandler extends ChannelInitializer<SocketChannel> 
         //不同类型连接，处理链中加入不同处理协议
         switch (type) {
             case GatewayType.HTTP:
+                // http 消息聚合器 512*1024为接收的最大 contentlength
+                // 把单个http请求转为FullHttpReuest或FullHttpResponse
+                pipeline.addLast("aggregator", new HttpObjectAggregator(10*1024*1024));
                 pipeline.addLast(
                         new HttpServerCodec(),
-                        new HttpServerHandler());
+                        new HttpServerHandler(),
+                        new LoggingHandler(LogLevel.DEBUG));
                 break;
             case GatewayType.TCP:
                 break;
@@ -51,8 +58,8 @@ public class SocketChannelInitHandler extends ChannelInitializer<SocketChannel> 
                 log.error("当前网关类型并不存在于配置文件中，无法初始化通道");
                 break;
         }
-        pipeline.addLast(
-                new StringEncoder(StandardCharsets.UTF_8),
-                new StringDecoder(StandardCharsets.UTF_8));
+//        pipeline.addLast(
+//                new StringEncoder(StandardCharsets.UTF_8),
+//                new StringDecoder(StandardCharsets.UTF_8));
     }
 }
